@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ASVAB V10 - Inline Onclick Fix</title>
+<style>
+:root{--bg:#f8fafc;--card:#fff;--text:#0f172a;--muted:#64748b;--border:#e2e8f0;--accent:#0ea5e9;--success:#16a34a;--danger:#dc2626}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Arial;line-height:1.65;background:var(--bg);color:var(--text)}
+header{position:sticky;top:0;z-index:20;display:flex;gap:10px;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--border);align-items:center;flex-wrap:wrap}
+.logo{font-weight:900}.badge{font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;background:var(--accent);color:white}
+.spacer{flex:1}.btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer}
+.btn-primary{background:var(--accent);color:white}
+.layout{display:grid;grid-template-columns:300px 1fr 300px;min-height:100vh}
+aside,.right{background:var(--card);padding:14px;overflow:auto;border:1px solid var(--border)}
+.main{padding:18px;overflow:auto;min-width:0}
+.drop{border:2px dashed var(--border);border-radius:14px;padding:16px;text-align:center;background:var(--bg)}
+.status{margin-top:8px;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--card);font-size:12px;white-space:pre-wrap;word-break:break-word}
+.tabs{display:flex;gap:8px;margin:14px 0}
+.tab{padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:var(--card);font-weight:700;cursor:pointer}
+.tab.active{background:var(--text);color:var(--bg)}
+.card{border:1px solid var(--border);border-radius:14px;background:var(--card);margin-bottom:12px;overflow:hidden}
+.card-h{padding:14px 16px;cursor:pointer;display:flex;gap:10px;align-items:center;user-select:none;background:#fff}
+.card-h:hover{background:#f1f5f9}
+.card-b{display:none;padding:0 14px 14px;background:#fff}
+.card.open.card-b{display:block}
+.dot{width:10px;height:10px;border-radius:50%;flex:0 0 10px}
+.chip{font-size:11px;padding:3px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--border);font-weight:700;color:var(--muted)}
+.section{border:1px solid var(--border);border-radius:12px;padding:0;margin:8px 0;background:var(--bg);overflow:hidden}
+.section-head{display:flex;gap:8px;align-items:center;cursor:pointer;user-select:none;padding:10px 12px;background:#f8fafc}
+.section-head:hover{background:#e2e8f0}
+.section-body{display:none;padding:12px;background:white;white-space:pre-wrap;word-break:break-word;font-size:14px;line-height:1.6;max-height:400px;overflow:auto;border-top:1px solid var(--border)}
+.section.open.section-body{display:block}
+.qbox{border:1px solid var(--border);border-radius:12px;padding:12px;margin:10px 0;background:var(--card)}
+.opt{display:flex;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;margin:6px 0;cursor:pointer;background:var(--card);width:100%;text-align:left}
+.opt.correct{border-color:var(--success);background:rgba(34,197,94,.12)}
+.opt.wrong{border-color:var(--danger);background:rgba(220,38,38,.10)}
+.flash{perspective:1000px;max-width:600px;margin:20px auto}
+.flip{position:relative;width:100%;min-height:260px;transform-style:preserve-3d;transition:transform.6s;cursor:pointer}
+.flip.flipped{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,.06);overflow:auto}
+.back{transform:rotateY(180deg);background:linear-gradient(135deg,#fff,#f8fafc)}
+.small{font-size:12px;color:var(--muted)}
+@media(max-width:1100px){.layout{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">ASVAB <span>V10 INLINE CLICK FIX</span></div>
+<div class="badge" id="statBadge">Loading...</div>
+<div class="spacer"></div>
+<button class="btn" id="exportBtn">Export</button>
+</header>
+<div class="layout">
+<aside>
+<div class="drop" id="dropZone">
+<h3 id="dropTitle">Your edited ASVAB.txt</h3>
+<p class="small">V10 uses inline onclick - must open</p>
+<button class="btn btn-primary" id="browseBtn">Browse.txt</button>
+<input type="file" id="fileInput" hidden accept=".txt">
+<div id="fileStats" class="status">Init...</div>
+</div>
+<div style="margin-top:12px"><b class="small">CHAPTERS</b><div id="toc"></div></div>
+</aside>
+<main class="main">
+<div class="tabs">
+<button class="tab active" data-tab="learn" onclick="switchTab('learn')">📚 Learn</button>
+<button class="tab" data-tab="quiz" onclick="switchTab('quiz')">🧠 Quiz</button>
+<button class="tab" data-tab="flash" onclick="switchTab('flash')">🃏 Flashcards</button>
+</div>
+<div id="learnView"><div id="chapters">Loading...</div></div>
+<div id="quizView" style="display:none">
+<div class="card open"><div class="card-b" style="display:block">
+<h3>Quiz - Transistor bug fixed</h3>
+<div id="subtestFilters" style="display:flex;flex-wrap:wrap;gap:6px;margin:10px 0"></div>
+<label class="small"><input type="checkbox" id="shuffleQ" checked> Shuffle</label>
+<label class="small"><input type="checkbox" id="includeUnknown"> Include unknown</label>
+<select id="qCount" class="btn"><option value="10" selected>10</option><option value="20">20</option><option value="50">50</option><option value="9999">All</option></select>
+<button class="btn btn-primary" id="startQuizBtn" style="margin-left:8px">Start →</button>
+</div></div>
+<div id="quizActive" style="display:none">
+<div class="small"><span id="qIdx">1</span>/<span id="qTotal">10</span> Score <b id="qScore">0</b> <button class="btn" id="exitQuiz" style="margin-left:10px">Exit</button></div>
+<div id="quizQuestion"></div>
+<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" id="prevQ">← Prev</button><button class="btn btn-primary" id="nextQ">Next →</button></div>
+</div>
+<div id="quizResult" style="display:none"></div>
+</div>
+<div id="flashView" style="display:none">
+<div id="flashFilters" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
+<div class="flash"><div class="flip" id="flipCard" onclick="this.classList.toggle('flipped')"><div class="face"><div id="flashQ" style="font-size:18px;font-weight:700"></div><div class="small" style="margin-top:10px">Click to flip</div><div id="flashQMeta" class="small"></div></div><div class="face back"><div id="flashA" style="white-space:pre-wrap"></div><div id="flashAMeta" class="small"></div><div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn" onclick="event.stopPropagation();gradeFlash('again')">Again</button><button class="btn" onclick="event.stopPropagation();gradeFlash('hard')">Hard</button><button class="btn btn-primary" onclick="event.stopPropagation();gradeFlash('good')">Good</button><button class="btn" onclick="event.stopPropagation();gradeFlash('easy')" style="background:#16a34a;color:white">Easy</button></div></div></div></div>
+<div style="text-align:center;display:flex;gap:8px;justify-content:center;margin-top:10px"><button class="btn" id="prevFlash">← Prev</button><button class="btn" id="shuffleFlash">Shuffle</button><button class="btn btn-primary" id="nextFlash">Next →</button></div>
+</div>
+</main>
+<div class="right"><div class="card open"><div class="card-b" style="display:block"><h4>Stats</h4><div id="quickStats" class="small"></div><div id="debug" class="small" style="margin-top:10px;white-space:pre-wrap"></div></div></div></div>
+</div>
+<script>
+const CONFIG={URLS:['./ASVAB.txt','ASVAB.txt','https://raw.githubusercontent.com/belkidebelkidir/ASVAB/main/ASVAB.txt']};
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+let state={chapters:[],questions:[],flashcards:[],quiz:[],qIndex:0,flashIndex:0,flashList:[]};
+function parseChaptersClean(text){
+  let indices=[]; let m;
+  let chapterRegex=/CHAPTER\s+(\d+)\s*\n+\s*([^\n]{3,80})/gi;
+  while((m=chapterRegex.exec(text))!==null){
+    let num=parseInt(m[1],10); let titleLine=m[2].trim();
+    if(titleLine.length<3) continue;
+    if(/^\d+$/.test(titleLine)) continue;
+    indices.push({num:num, title:titleLine, index:m.index, fullMatch:m[0]});
+  }
+  let chapterColonRegex=/Chapter\s+(\d+):\s*([^\n]{3,80})/g;
+  while((m=chapterColonRegex.exec(text))!==null){
+    let num=parseInt(m[1],10); let titleLine=m[2].trim();
+    if(titleLine.length<3) continue;
+    let near=indices.some(c=>Math.abs(c.index-m.index)<200);
+    if(!near){ indices.push({num:num, title:'Chapter '+num+': '+titleLine, index:m.index, fullMatch:m[0]}); }
+  }
+  indices.sort((a,b)=>a.index-b.index);
+  let chapters=[];
+  for(let i=0;i<indices.length;i++){
+    let cur=indices[i];
+    let nextIdx=(i+1<indices.length)?indices[i+1].index:text.length;
+    let sliceStart=cur.index+cur.fullMatch.length;
+    let slice=text.slice(sliceStart, Math.min(nextIdx, sliceStart+80000));
+    let sections=[]; let lines=slice.split(/\n/); let currentSecTitle='Content'; let currentSecContent=''; let paraBuffer=[];
+    for(let j=0;j<lines.length;j++){
+      let line=lines[j].trim();
+      if(!line){
+        if(paraBuffer.length>0){
+          let para=paraBuffer.join(' ').trim();
+          if(para.length>30){
+            if(para.length<80 &&!para.includes('.') && /^[A-Z][a-z]+(\s+[A-Z][a-z]+)*/.test(para) && para.split(' ').length<=8){
+              if(currentSecContent.length>100){ sections.push({id:'sec_'+i+'_'+sections.length, title:currentSecTitle, content:currentSecContent.slice(0,4000)}); }
+              currentSecTitle=para; currentSecContent='';
+            } else { currentSecContent+=para+'\n\n'; }
+          }
+          paraBuffer=[];
+        }
+        continue;
+      }
+      paraBuffer.push(line);
+    }
+    if(currentSecContent.length>50){ sections.push({id:'sec_'+i+'_'+sections.length, title:currentSecTitle, content:currentSecContent.slice(0,4000)}); }
+    if(sections.length===0 && slice.trim().length>100){ sections.push({id:'sec_'+i+'_0', title:cur.title, content:slice.trim().slice(0,5000)}); }
+    let lowerTitle=cur.title.toLowerCase(); let code='GEN';
+    if(lowerTitle.includes('general science')||lowerTitle.includes('about the asvab')&&i===0) code='GS';
+    else if(lowerTitle.includes('word knowledge')) code='WK';
+    else if(lowerTitle.includes('paragraph comprehension')) code='PC';
+    else if(lowerTitle.includes('math strategies')) code='MK';
+    else if(lowerTitle.includes('arithmetic reasoning')) code='AR';
+    else if(lowerTitle.includes('mathematics knowledge')) code='MK';
+    else if(lowerTitle.includes('electronics')) code='EI';
+    else if(lowerTitle.includes('automotive')) code='AS';
+    else if(lowerTitle.includes('shop')) code='AS';
+    else if(lowerTitle.includes('mechanical comprehension')) code='MC';
+    else if(lowerTitle.includes('assembling objects')) code='AO';
+    else { if(cur.num===9) code='GS'; else if(cur.num===3) code='WK'; else if(cur.num===4) code='PC'; else if(cur.num===5) code='MK'; else if(cur.num===6) code='AR'; else if(cur.num===7) code='MK'; else if(cur.num===10) code='EI'; else if(cur.num===11||cur.num===12) code='AS'; else if(cur.num===13) code='MC'; else if(cur.num===14) code='AO'; }
+    if(sections.length>0){ chapters.push({id:'ch_'+cur.num, title:cur.title.includes('Chapter')?cur.title:'Chapter '+cur.num+': '+cur.title, code:code, sections:sections.slice(0,30)}); }
+  }
+  if(chapters.length===0){
+    let loRegex=/([A-Z][A-Za-z\s&,\-]{5,90})\n+\n+LEARNING OBJECTIVES\n+In this section[^\n]*\n+([\s\S]{200,4000}?)(?=\n\n[A-Z][A-Za-z\s&,\-]{5,90}\n+\n+LEARNING OBJECTIVES|\n\nPractice Questions|\n\nPART [IVX]+:|$)/g;
+    let buckets={}; let count=0;
+    while((m=loRegex.exec(text))!==null && count<100){
+      let title=m[1].trim(); let content=m[2].trim();
+      if(title.length<5||title.length>90) continue;
+      if(content.length<100) continue;
+      let chTitle='Chapter 9: General Science'; let chCode='GS';
+      let lower=title.toLowerCase();
+      if(lower.includes('nutrition')||lower.includes('genetics')||lower.includes('geology')){ chTitle='Chapter 9: General Science'; chCode='GS'; }
+      else if(lower.includes('word knowledge')||lower.includes('prefix')){ chTitle='Chapter 3: Word Knowledge'; chCode='WK'; }
+      else if(lower.includes('arithmetic')){ chTitle='Chapter 6: Arithmetic Reasoning'; chCode='AR'; }
+      else if(lower.includes('equations')||lower.includes('polygons')){ chTitle='Chapter 7: Mathematics Knowledge'; chCode='MK'; }
+      else if(lower.includes('electron')){ chTitle='Chapter 10: Electronics Information'; chCode='EI'; }
+      else if(lower.includes('engine')){ chTitle='Chapter 11: Automotive Information'; chCode='AS'; }
+      else if(lower.includes('measuring tools')){ chTitle='Chapter 12: Shop Information'; chCode='AS'; }
+      else if(lower.includes('forces')||lower.includes('simple machines')){ chTitle='Chapter 13: Mechanical Comprehension'; chCode='MC'; }
+      if(!buckets[chTitle]) buckets[chTitle]={id:chTitle, title:chTitle, code:chCode, sections:[]};
+      buckets[chTitle].sections.push({id:'sec_'+count, title:title, content:content.slice(0,3500)});
+      count++;
+    }
+    chapters=Object.values(buckets);
+  }
+  if(chapters.length===0){
+    chapters=[{id:'fallback',title:'Fallback - Click must work test',code:'GS',sections:[
+      {id:'s1',title:'Test Topic 1 - Click me',content:'If you can read this, onclick works! File length: '+text.length},
+      {id:'s2',title:'Test Topic 2 - Click me too',content:'Second test topic.'}
+    ]}];
+  }
+  return chapters;
+}
+function parseQuestionsFixed(text){
+  let lines=text.split(/\r?\n/); let questions=[]; let cur={questions:[],answerMap:{}}; let sets=[]; let inAns=false;
+  for(let i=0;i<lines.length;i++){
+    let line=lines[i].trim(); if(!line) continue;
+    if(/Practice Set\s+\d+/i.test(line)){ if(cur.questions.length) sets.push(cur); cur={questions:[],answerMap:{}}; inAns=false; continue; }
+    if(/Answers and Explanations/i.test(line)){ inAns=true; continue; }
+    if(!inAns){
+      let qm=line.match(/^\s*0*(\d+)[\.:\)]\s*(.{10,})/);
+      if(qm){
+        let qText=qm[2].trim();
+        let same=null; let sameM=qText.match(/^(.+?)\s+([A-E])[\.\)]\s*(.+)$/);
+        if(sameM && sameM[1].length>15 && sameM[3].length<100){ qText=sameM[1].trim(); same={letter:sameM[2].toUpperCase(), text:sameM[3].trim()}; }
+        let opts=[]; if(same) opts.push(same);
+        let j=i+1;
+        while(j<lines.length && j<i+15 && opts.length<5){
+          let om=lines[j].match(/^\s*([A-E])[\.\)]\s*(.+)/);
+          if(om) opts.push({letter:om[1].toUpperCase(), text:om[2].trim().slice(0,400)});
+          j++;
+          if(/^\s*0*\d+[\.:\)]\s*.{10,}/.test(lines[j]) && opts.length>=2) break;
+          if(/Practice Set|Answers and Explanations/i.test(lines[j])) break;
+        }
+        if(opts.length>=2){
+          opts.sort((a,b)=>a.letter.charCodeAt(0)-b.letter.charCodeAt(0));
+          cur.questions.push({num:qm[1], q:qText, options:opts, line:i, answer:null});
+          i=j-1;
+        }
+      }
+    }else{
+      let am=line.match(/^\s*0*(\d+)\.\s*\(?([A-E])\)?[\.\s]/);
+      if(am){ cur.answerMap[am[1]]=am[2].toUpperCase(); }
+    }
+  }
+  if(cur.questions.length) sets.push(cur);
+  sets.forEach(set=>{
+    set.questions.forEach(q=>{ let a=set.answerMap[q.num]; if(a) q.answer=a; });
+    questions=questions.concat(set.questions);
+  });
+  return questions.slice(0,4000).map((q,i)=>({id:'q_'+i, subtest:detectSub(q.q), q:q.q, options:q.options, answer:q.answer||null}));
+}
+function parseFlashcards(text){
+  let lines=text.split(/\r?\n/); let cards=[];
+  for(let i=0;i<lines.length-1;i++){
+    let l=lines[i].trim(); if(!l) continue;
+    if(l.includes('_____')||/_{4,}/.test(l)){
+      if(l.length<12||l.length>500) continue;
+      if(/^_+$/.test(l.replace(/\s/g,''))) continue;
+      for(let k=1;k<=5;k++){
+        if(i+k>=lines.length) break;
+        let nxt=lines[i+k].trim(); if(!nxt) continue;
+        if(nxt.includes('_____')) continue;
+        if(nxt.length>400) continue;
+        if(/^\s*\d+\./.test(nxt)) continue;
+        if(nxt.length<5) continue;
+        cards.push({id:'fb_'+i, q:l, a:nxt, subtest:detectSub(l), known:0, lastReviewed:null, reviewCount:0});
+        break;
+      }
+    }
+    if(cards.length>=400) break;
+  }
+  if(cards.length<10){
+    let qs=parseQuestionsFixed(text);
+    qs.slice(0,50).forEach((q,i)=>{
+      if(q.answer){
+        let ansOpt=q.options.find(o=>o.letter===q.answer);
+        if(ansOpt){
+          cards.push({id:'qfc_'+i, q:q.q, a:ansOpt.text+' ('+q.answer+') - '+q.subtest, subtest:q.subtest, known:0, lastReviewed:null, reviewCount:0});
+        }
+      }
+    });
+  }
+  return cards;
+}
+function detectSub(t){
+  t=(t||'').toLowerCase();
+  if(t.includes('transistor')||t.includes('circuit')||t.includes('electron')) return 'EI';
+  if(t.includes('cell')||t.includes('nutrition')||t.includes('blood')||t.includes('genetics')) return 'GS';
+  if(t.includes('engine')||t.includes('brake')) return 'AS';
+  if(t.includes('gear')||t.includes('pulley')) return 'MC';
+  return 'GEN';
+}
+function parseDoc(text){
+  let ch=parseChaptersClean(text);
+  let qs=parseQuestionsFixed(text);
+  let fc=parseFlashcards(text);
+  return {chapters:ch, questions:qs, flashcards:fc};
+}
+function render(){
+  let cont=document.getElementById('chapters'); cont.innerHTML='';
+  let frag=document.createDocumentFragment();
+  state.chapters.forEach(ch=>{
+    let card=document.createElement('div'); card.className='card open';
+    let head=document.createElement('div');
+    head.className='card-h';
+    head.setAttribute('onclick', "this.parentElement.classList.toggle('open')");
+    let dot=document.createElement('div'); dot.className='dot'; dot.style.background='#0ea5e9';
+    let h4=document.createElement('h4'); h4.textContent=ch.title+' ('+ch.sections.length+' topics)';
+    let chip=document.createElement('span'); chip.className='chip'; chip.textContent=ch.code;
+    head.appendChild(dot); head.appendChild(h4); head.appendChild(chip);
+    let body=document.createElement('div'); body.className='card-b'; body.style.display='block';
+    ch.sections.forEach(sec=>{
+      let secDiv=document.createElement('div'); secDiv.className='section';
+      let secHead=document.createElement('div'); secHead.className='section-head';
+      secHead.setAttribute('onclick', "this.parentElement.classList.toggle('open')");
+      let cb=document.createElement('input'); cb.type='checkbox'; cb.setAttribute('onclick','event.stopPropagation()');
+      let h5=document.createElement('h5'); h5.textContent=sec.title;
+      let arrow=document.createElement('span'); arrow.textContent='›'; arrow.style.fontWeight='800';
+      secHead.appendChild(cb); secHead.appendChild(h5); secHead.appendChild(arrow);
+      let secBody=document.createElement('div'); secBody.className='section-body';
+      secBody.textContent=sec.content;
+      secDiv.appendChild(secHead); secDiv.appendChild(secBody);
+      body.appendChild(secDiv);
+    });
+    card.appendChild(head); card.appendChild(body);
+    frag.appendChild(card);
+  });
+  cont.appendChild(frag);
+  document.getElementById('toc').innerHTML=state.chapters.map(c=>`<div class="small" style="padding:4px 0;border-bottom:1px solid #e2e8f0"><b>${esc(c.code)}</b> ${esc(c.title)} - ${c.sections.length}</div>`).join('')||'<div class="small">No chapters</div>';
+  document.getElementById('quickStats').innerHTML=`Chapters: ${state.chapters.length}<br>Topics: ${state.chapters.reduce((a,c)=>a+c.sections.length,0)}<br>Qs: ${state.questions.length}<br>Cards: ${state.flashcards.length}<br><br>V10 inline onclick - click chapter header then topic header`;
+  document.getElementById('statBadge').textContent=`${state.chapters.length} REAL • ${state.questions.length} Qs • ${state.flashcards.length} cards • V10`;
+  renderFlashFilters();
+}
+function renderQuiz(){
+  let q=state.quiz[state.qIndex]; if(!q) return;
+  document.getElementById('qIdx').textContent=state.qIndex+1;
+  document.getElementById('qTotal').textContent=state.quiz.length;
+  let box=document.getElementById('quizQuestion'); box.innerHTML='';
+  let div=document.createElement('div'); div.className='qbox';
+  let h3=document.createElement('h3'); h3.textContent=q.q; h3.style.fontSize='16px'; h3.style.margin='0 0 10px';
+  div.appendChild(h3);
+  q.options.forEach(opt=>{
+    let btn=document.createElement('button'); btn.className='opt';
+    if(q.userAnswer===opt.letter){
+      if(q.answer && opt.letter===q.answer) btn.classList.add('correct');
+      else if(q.answer && opt.letter!==q.answer) btn.classList.add('wrong');
+    }else if(q.answered && q.answer===opt.letter) btn.classList.add('correct');
+    btn.innerHTML=`<b>${opt.letter}.</b> <span>${esc(opt.text)}</span>`;
+    btn.addEventListener('click',()=>{
+      q.userAnswer=opt.letter; q.answered=true;
+      if(q.answer) q.correct=(q.answer===opt.letter);
+      let score=state.quiz.filter(x=>x.correct).length;
+      document.getElementById('qScore').textContent=score;
+      renderQuiz();
+    });
+    div.appendChild(btn);
+  });
+  if(q.answered && q.answer){
+    let expl=document.createElement('div'); expl.className='small'; expl.style.marginTop='8px'; expl.style.padding='8px'; expl.style.background='var(--bg)'; expl.style.borderRadius='8px';
+    expl.innerHTML=(q.correct?'✅ Correct':'❌ Wrong')+' Answer: <b>'+q.answer+'</b>';
+    div.appendChild(expl);
+  }
+  box.appendChild(div);
+}
+function renderFlashFilters(){
+  let c=document.getElementById('flashFilters'); if(!c) return;
+  c.innerHTML='';
+  let codes=[...new Set(state.flashcards.map(f=>f.subtest))];
+  codes.forEach(code=>{
+    let cnt=state.flashcards.filter(f=>f.subtest===code).length;
+    let btn=document.createElement('button'); btn.className='btn'; btn.textContent=code+' '+cnt;
+    btn.setAttribute('onclick',`filterFlash('${code}')`);
+    c.appendChild(btn);
+  });
+  let allBtn=document.createElement('button'); allBtn.className='btn btn-primary'; allBtn.textContent='All '+state.flashcards.length;
+  allBtn.setAttribute('onclick',`filterFlash('ALL')`);
+  c.appendChild(allBtn);
+  renderFlash();
+}
+function renderFlash(){
+  if(!state.flashList || state.flashList.length===0){ state.flashList=state.flashcards.slice(); }
+  if(state.flashList.length===0){
+    document.getElementById('flashQ').textContent='No flashcards';
+    document.getElementById('flashA').textContent='File has no _____ blanks, so created from quiz questions';
+    return;
+  }
+  let f=state.flashList[state.flashIndex%state.flashList.length];
+  document.getElementById('flashQ').textContent=f.q;
+  document.getElementById('flashA').textContent=f.a;
+  document.getElementById('flashQMeta').textContent=f.subtest;
+  document.getElementById('flashAMeta').textContent='Card '+(state.flashIndex+1)+'/'+state.flashList.length;
+  document.getElementById('flipCard').classList.remove('flipped');
+}
+function filterFlash(code){
+  if(code==='ALL') state.flashList=state.flashcards.slice();
+  else state.flashList=state.flashcards.filter(f=>f.subtest===code);
+  state.flashIndex=0;
+  renderFlash();
+}
+function gradeFlash(grade){
+  let f=state.flashList[state.flashIndex%state.flashList.length]; if(!f) return;
+  state.flashIndex=(state.flashIndex+1)%state.flashList.length;
+  renderFlash();
+}
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(x=>{
+    x.classList.toggle('active', x.dataset.tab===tab);
+  });
+  document.getElementById('learnView').style.display=tab==='learn'?'block':'none';
+  document.getElementById('quizView').style.display=tab==='quiz'?'block':'none';
+  document.getElementById('flashView').style.display=tab==='flash'?'block':'none';
+}
+function loadFile(file){
+  let r=new FileReader();
+  r.onload=e=>{
+    let text=e.target.result;
+    let parsed=parseDoc(text);
+    state.chapters=parsed.chapters;
+    state.questions=parsed.questions;
+    state.flashcards=parsed.flashcards;
+    state.flashList=parsed.flashcards.slice();
+    document.getElementById('fileStats').innerHTML=`✅ Loaded ${esc(file.name)}<br>${parsed.chapters.length} REAL chapters • ${parsed.questions.length} Qs • ${parsed.flashcards.length} cards<br>V10 inline onclick - click MUST work`;
+    render();
+  };
+  r.readAsText(file);
+}
+async function autoLoad(){
+  for(let url of CONFIG.URLS){
+    try{
+      let res=await fetch(url,{cache:'no-store'}); if(!res.ok) continue;
+      let text=await res.text(); if(text.length<5000) continue;
+      let parsed=parseDoc(text);
+      state.chapters=parsed.chapters;
+      state.questions=parsed.questions;
+      state.flashcards=parsed.flashcards;
+      state.flashList=parsed.flashcards.slice();
+      document.getElementById('fileStats').innerHTML=`✅ Auto-loaded ${esc(url)}<br>${parsed.chapters.length} REAL chapters • ${parsed.questions.length} Qs • ${parsed.flashcards.length} cards<br>V10 inline onclick - if this doesn't open, nothing will`;
+      render();
+      document.getElementById('subtestFilters').innerHTML=['GS','AR','WK','PC','MK','EI','AS','MC','AO','GEN'].map(s=>`<label class="chip"><input type="checkbox" value="${s}" checked> ${s}</label>`).join(' ');
+      return;
+    }catch(e){}
+  }
+}
+document.getElementById('browseBtn')?.addEventListener('click',()=>document.getElementById('fileInput').click());
+document.getElementById('fileInput')?.addEventListener('change',e=>{ if(e.target.files[0]) loadFile(e.target.files[0]); });
+document.getElementById('dropZone')?.addEventListener('dragover',e=>{e.preventDefault();});
+document.getElementById('dropZone')?.addEventListener('drop',e=>{e.preventDefault(); if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);});
+document.getElementById('startQuizBtn')?.addEventListener('click',()=>{
+  let selected=[...document.querySelectorAll('#subtestFilters input:checked')].map(i=>i.value);
+  let pool=state.questions.filter(q=>selected.includes(q.subtest));
+  let include=document.getElementById('includeUnknown').checked;
+  if(!include) pool=pool.filter(q=>q.answer!==null);
+  let count=parseInt(document.getElementById('qCount').value,10);
+  let shuffle=document.getElementById('shuffleQ').checked;
+  if(shuffle) pool=pool.slice().sort(()=>Math.random()-0.5);
+  state.quiz=pool.slice(0,count).map(q=>Object.assign({},q,{userAnswer:null,answered:false,correct:null}));
+  state.qIndex=0;
+  document.getElementById('quizActive').style.display='block';
+  document.getElementById('qTotal').textContent=state.quiz.length;
+  document.getElementById('qScore').textContent='0';
+  renderQuiz();
+});
+document.getElementById('nextQ')?.addEventListener('click',()=>{ if(state.qIndex<state.quiz.length-1){ state.qIndex++; renderQuiz(); } });
+document.getElementById('prevQ')?.addEventListener('click',()=>{ if(state.qIndex>0){ state.qIndex--; renderQuiz(); } });
+document.getElementById('exitQuiz')?.addEventListener('click',()=>{ document.getElementById('quizActive').style.display='none'; });
+document.getElementById('nextFlash')?.addEventListener('click',()=>{ state.flashIndex=(state.flashIndex+1)%state.flashList.length; renderFlash(); });
+document.getElementById('prevFlash')?.addEventListener('click',()=>{ state.flashIndex=Math.max(0,state.flashIndex-1); renderFlash(); });
+document.getElementById('shuffleFlash')?.addEventListener('click',()=>{ state.flashList=state.flashList.slice().sort(()=>Math.random()-0.5); state.flashIndex=0; renderFlash(); });
+autoLoad();
+</script>
+</body>
+</html>
